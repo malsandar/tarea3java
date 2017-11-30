@@ -5,10 +5,17 @@
  */
 package controlador;
 
+import java.util.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
+import modelo.Arbol;
+import modelo.Flor;
+import modelo.Semilla;
 import modelo.SemillaCRUD;
 import vista.Principal;
 
@@ -17,25 +24,62 @@ import vista.Principal;
  * @author Julio
  */
 public class Controlador implements ActionListener {
-
+    private List<Semilla> semillas;
     private Principal vista;
     private SemillaCRUD modelo;
 
     public Controlador() {
+        this.semillas = new ArrayList<Semilla>();
         this.vista = new Principal();
         this.modelo = new SemillaCRUD();
     }
 
     public Controlador(Principal vista, SemillaCRUD modelo) {
+        this.semillas = new ArrayList<Semilla>();
         this.vista = vista;
         this.modelo = modelo;
         this.vista.guardarButton.addActionListener(this);
         this.vista.tipoComboBox.addActionListener(this);
         this.vista.buscarButton.addActionListener(this);
+        this.vista.borrarButton.addActionListener(this);
+        this.vista.actualizarButton.addActionListener(this);
+    }
+    
+    public void llenarTabla(JTable tablaSemilla){
+        DefaultTableModel modeloTabla = new DefaultTableModel();
+        tablaSemilla.setModel(modeloTabla);
+        
+        modeloTabla.addColumn("ID");
+        modeloTabla.addColumn("Nombre");
+        modeloTabla.addColumn("Tipo");
+        modeloTabla.addColumn("Precio");
+        modeloTabla.addColumn("Color");
+        modeloTabla.addColumn("Altura");
+        
+        Object[] columna = new Object[6];
+        int cantidadSemillas = this.semillas.size();
+        for(int x = 0; x < cantidadSemillas; x++){
+            columna[0] = this.semillas.get(x).getCodigo();
+            columna[1] = this.semillas.get(x).getNombre();
+            columna[3] = this.semillas.get(x).getPrecio();
+            if(this.semillas.get(x) instanceof Flor){
+                columna[2] = "Flor";
+                columna[4] = ((Flor)this.semillas.get(x)).getColor();
+                columna[5] = "No Aplica";
+            }
+            else if(this.semillas.get(x) instanceof Arbol){
+                columna[2] = "Arbol";
+                columna[5] = ((Arbol)this.semillas.get(x)).getAlturaMaxima();
+                columna[4] = "No Aplica";
+            }
+            modeloTabla.addRow(columna);
+            
+        }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        //Cambia el label comodin entre "Color" y "Altura" dependiendo del tipo de semilla
         if (e.getSource() == this.vista.tipoComboBox) {
             JComboBox cb = (JComboBox) e.getSource();
             String opcion = (String) cb.getSelectedItem();
@@ -56,6 +100,7 @@ public class Controlador implements ActionListener {
                     this.vista.comodinTextBox.setVisible(false);
             }
         }
+        //Busca una semilla en la BD
         if (e.getSource() == this.vista.buscarButton) {
             String id = this.vista.buscarTextBox.getText();
             String resultado = this.modelo.buscarSemilla(id);
@@ -75,7 +120,7 @@ public class Controlador implements ActionListener {
                 JOptionPane.showMessageDialog(null, "No se encontraron semillas con ese código");
 
         }
-
+        //Inserta una semilla en la BD
         if (e.getSource() == this.vista.guardarButton) {
             String id = this.vista.idTextBox.getText();
             String nombre = this.vista.nombreTextBox.getText();
@@ -98,6 +143,24 @@ public class Controlador implements ActionListener {
                     JOptionPane.showMessageDialog(null, "No Guardado");
                 }
             }
+        }
+        //Borra una semilla en la BD
+        if(e.getSource() == this.vista.borrarButton){
+            String id = this.vista.borrarTextBox.getText();
+            if(this.modelo.borrarSemilla(id)){
+                JOptionPane.showMessageDialog(null, "Eliminado");
+            }
+            else
+                JOptionPane.showMessageDialog(null, "No se pudo eliminar, dado de que no existe el código la semilla en los registros");
+        }
+        
+        if(e.getSource() == this.vista.actualizarButton){
+            this.semillas = this.modelo.listarSemillas();
+            if(this.semillas == null){
+                JOptionPane.showMessageDialog(null, "No existen semillas en la BD");
+            }
+            else
+                llenarTabla(this.vista.jTable2);
         }
     }
 
