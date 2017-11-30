@@ -24,6 +24,7 @@ import vista.Principal;
  * @author Julio
  */
 public class Controlador implements ActionListener {
+
     private List<Semilla> semillas;
     private Principal vista;
     private SemillaCRUD modelo;
@@ -44,36 +45,39 @@ public class Controlador implements ActionListener {
         this.vista.borrarButton.addActionListener(this);
         this.vista.actualizarButton.addActionListener(this);
     }
-    
-    public void llenarTabla(JTable tablaSemilla){
+
+    public void llenarTabla(JTable tablaSemilla) {
         DefaultTableModel modeloTabla = new DefaultTableModel();
         tablaSemilla.setModel(modeloTabla);
-        
+
         modeloTabla.addColumn("ID");
         modeloTabla.addColumn("Nombre");
         modeloTabla.addColumn("Tipo");
-        modeloTabla.addColumn("Precio");
         modeloTabla.addColumn("Color");
         modeloTabla.addColumn("Altura");
-        
-        Object[] columna = new Object[6];
+        modeloTabla.addColumn("Precio");
+        modeloTabla.addColumn("Precio con oferta");
+
+        Object[] columna = new Object[7];
         int cantidadSemillas = this.semillas.size();
-        for(int x = 0; x < cantidadSemillas; x++){
+        for (int x = 0; x < cantidadSemillas; x++) {
             columna[0] = this.semillas.get(x).getCodigo();
             columna[1] = this.semillas.get(x).getNombre();
-            columna[3] = this.semillas.get(x).getPrecio();
-            if(this.semillas.get(x) instanceof Flor){
+            if (this.semillas.get(x) instanceof Flor) {
+                columna[6] = (int)((Flor)this.semillas.get(x)).calcularPrecioOferta();
+                columna[5] = this.semillas.get(x).getPrecio();
                 columna[2] = "Flor";
-                columna[4] = ((Flor)this.semillas.get(x)).getColor();
-                columna[5] = "No Aplica";
-            }
-            else if(this.semillas.get(x) instanceof Arbol){
-                columna[2] = "Arbol";
-                columna[5] = ((Arbol)this.semillas.get(x)).getAlturaMaxima();
+                columna[3] = ((Flor) this.semillas.get(x)).getColor();
                 columna[4] = "No Aplica";
+            } else if (this.semillas.get(x) instanceof Arbol) {
+                columna[6] = (int)((Arbol)this.semillas.get(x)).calcularPrecioOferta();
+                columna[5] = this.semillas.get(x).getPrecio();
+                columna[2] = "Arbol";
+                columna[4] = ((Arbol) this.semillas.get(x)).getAlturaMaxima();
+                columna[3] = "No Aplica";
             }
             modeloTabla.addRow(columna);
-            
+
         }
     }
 
@@ -115,9 +119,9 @@ public class Controlador implements ActionListener {
                 } else {
                     JOptionPane.showMessageDialog(null, "Ups hubo un error inesperado");
                 }
-            }
-            else
+            } else {
                 JOptionPane.showMessageDialog(null, "No se encontraron semillas con ese código");
+            }
 
         }
         //Inserta una semilla en la BD
@@ -126,55 +130,49 @@ public class Controlador implements ActionListener {
             String nombre = this.vista.nombreTextBox.getText();
             String tipo = (String) this.vista.tipoComboBox.getSelectedItem();
             String precio = this.vista.precioTextBox.getText();
-            if (tipo.equals("Flor")) {
-                
-                String color = this.vista.comodinTextBox.getText();
-                
-                if (this.modelo.insertarSemilla(id, nombre, precio,tipo, color)) {
-                    JOptionPane.showMessageDialog(null, "Guardado");
-                } else {
-                    JOptionPane.showMessageDialog(null, "No Guardado");
+            String comodin = this.vista.comodinTextBox.getText();
+            if ((Integer.parseInt(id) > 99 && Integer.parseInt(id) < 1000) && nombre.length() > 4 && Integer.parseInt(precio) > 0) {
+                if (tipo.equals("Flor")) {
+
+                    if (this.modelo.insertarSemilla(id, nombre, precio, tipo, comodin)) {
+                        JOptionPane.showMessageDialog(null, "Guardado");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No Guardado");
+                    }
+                } else if (tipo.equals("Arbol")) {
+                    if (Integer.parseInt(comodin) > 0) {
+                        if (this.modelo.insertarSemilla(id, nombre, precio, tipo, comodin)) {
+                            JOptionPane.showMessageDialog(null, "Guardado");
+                        } else {
+                            JOptionPane.showMessageDialog(null, "No Guardado");
+                        }
+                    }
+                    else
+                        JOptionPane.showMessageDialog(null, "El precio debe ser mayor que cero");
+
                 }
-            } else if (tipo.equals("Arbol")) {
-                String altura = this.vista.comodinTextBox.getText();
-                if (this.modelo.insertarSemilla(id, nombre, precio,tipo, altura)) {
-                    JOptionPane.showMessageDialog(null, "Guardado");
-                } else {
-                    JOptionPane.showMessageDialog(null, "No Guardado");
-                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Datos inválidos.\n- La ID debe estar entre 100 y 999\n- El nombre debe tener más de 4 caracteres\n- Precio debe ser mayorque cero");
             }
         }
         //Borra una semilla en la BD
-        if(e.getSource() == this.vista.borrarButton){
+        if (e.getSource() == this.vista.borrarButton) {
             String id = this.vista.borrarTextBox.getText();
-            if(this.modelo.borrarSemilla(id)){
+            if (this.modelo.borrarSemilla(id)) {
                 JOptionPane.showMessageDialog(null, "Eliminado");
-            }
-            else
+            } else {
                 JOptionPane.showMessageDialog(null, "No se pudo eliminar, dado de que no existe el código la semilla en los registros");
-        }
-        
-        if(e.getSource() == this.vista.actualizarButton){
-            this.semillas = this.modelo.listarSemillas();
-            if(this.semillas == null){
-                JOptionPane.showMessageDialog(null, "No existen semillas en la BD");
             }
-            else
+        }
+
+        if (e.getSource() == this.vista.actualizarButton) {
+            this.semillas = this.modelo.listarSemillas();
+            if (this.semillas == null) {
+                JOptionPane.showMessageDialog(null, "No existen semillas en la BD");
+            } else {
                 llenarTabla(this.vista.jTable2);
+            }
         }
     }
 
 }
-
-/*
-if(e.getSource() == this.vista.guardarButton){
-String nombre = this.vista.idTextBox.getText();
-            String apellido = this.vista.nombreTextBox.getText();
-            int rut = Integer.parseInt(this.vista.precioTextBox.getText());
-            char dv = this.vista.jTextField4.getText().charAt(0);
-            String email = this.vista.jTextField5.getText();
-            if(modelo.insertarPersona(new Persona(rut, dv, nombre, apellido, email)))
-                JOptionPane.showMessageDialog(null, "Guardado");
-            else
-                JOptionPane.showMessageDialog(null, "No Guardado");
- */
