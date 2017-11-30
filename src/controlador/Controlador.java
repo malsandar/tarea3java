@@ -95,7 +95,7 @@ public class Controlador implements ActionListener {
                     break;
                 case "Arbol":
                     this.vista.comodinLabel.setVisible(true);
-                    this.vista.comodinLabel.setText("Altura");
+                    this.vista.comodinLabel.setText("Altura (en centímetros)");
                     this.vista.comodinTextBox.setVisible(true);
                     break;
                 default:
@@ -152,6 +152,7 @@ public class Controlador implements ActionListener {
 
                 }
             } else {
+                this.vista.idTipTextBox.setText("(Debe ser un número entre 100 y 999)");
                 JOptionPane.showMessageDialog(null, "Datos inválidos.\n- La ID debe estar entre 100 y 999\n- El nombre debe tener más de 4 caracteres\n- Precio debe ser mayorque cero");
             }
         }

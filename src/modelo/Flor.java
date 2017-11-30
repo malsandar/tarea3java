@@ -29,7 +29,7 @@ public class Flor extends Semilla{
     
     @Override
     public double calcularPrecioOferta() {
-        if(!this.color.equals("Rojo"))
+        if(!this.color.equalsIgnoreCase("Rojo") || !this.color.equalsIgnoreCase("Roja"))
             return this.getPrecio()-(this.getPrecio()*DESC_FLOR);
         else
             return this.getPrecio();
